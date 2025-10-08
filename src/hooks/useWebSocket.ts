@@ -6,6 +6,9 @@ export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Map<string, UserTypingData>>(new Map());
   const currentConversationId = useRef<string | null>(null);
+  const messageCallbacks = useRef<Set<(message: SocketMessage) => void>>(new Set());
+  const conversationCallbacks = useRef<Set<(conversation: SocketConversation) => void>>(new Set());
+  const statusCallbacks = useRef<Set<(data: { messageId: string; status: string }) => void>>(new Set());
 
   useEffect(() => {
     // Connect to WebSocket server
@@ -17,6 +20,20 @@ export const useWebSocket = () => {
 
     const handleDisconnect = () => {
       setIsConnected(false);
+    };
+
+    const handleNewMessage = (message: SocketMessage) => {
+      console.log('WebSocket: New message received', message);
+      messageCallbacks.current.forEach(callback => callback(message));
+    };
+
+    const handleConversationUpdate = (conversation: SocketConversation) => {
+      console.log('WebSocket: Conversation update received', conversation);
+      conversationCallbacks.current.forEach(callback => callback(conversation));
+    };
+
+    const handleMessageStatusUpdate = (data: { messageId: string; status: string }) => {
+      statusCallbacks.current.forEach(callback => callback(data));
     };
 
     const handleTyping = (data: UserTypingData) => {
@@ -44,12 +61,18 @@ export const useWebSocket = () => {
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
-    webSocketService.onUserTyping(handleTyping);
+    socket.on('new-message', handleNewMessage);
+    socket.on('conversation-update', handleConversationUpdate);
+    socket.on('message-status-update', handleMessageStatusUpdate);
+    socket.on('user-typing', handleTyping);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
-      webSocketService.removeAllListeners();
+      socket.off('new-message', handleNewMessage);
+      socket.off('conversation-update', handleConversationUpdate);
+      socket.off('message-status-update', handleMessageStatusUpdate);
+      socket.off('user-typing', handleTyping);
       webSocketService.disconnect();
     };
   }, []);
@@ -71,15 +94,24 @@ export const useWebSocket = () => {
   };
 
   const onNewMessage = (callback: (message: SocketMessage) => void) => {
-    webSocketService.onNewMessage(callback);
+    messageCallbacks.current.add(callback);
+    return () => {
+      messageCallbacks.current.delete(callback);
+    };
   };
 
   const onMessageStatusUpdate = (callback: (data: { messageId: string; status: string }) => void) => {
-    webSocketService.onMessageStatusUpdate(callback);
+    statusCallbacks.current.add(callback);
+    return () => {
+      statusCallbacks.current.delete(callback);
+    };
   };
 
   const onConversationUpdate = (callback: (conversation: SocketConversation) => void) => {
-    webSocketService.onConversationUpdate(callback);
+    conversationCallbacks.current.add(callback);
+    return () => {
+      conversationCallbacks.current.delete(callback);
+    };
   };
 
   return {

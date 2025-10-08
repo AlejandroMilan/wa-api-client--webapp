@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useConversations, useLastMessages } from "../hooks/useApi";
 import { ConversationItem } from "./ConversationItem";
 import { NewConversationModal } from "./NewConversationModal";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 interface ConversationListProps {
   selectedConversationId: string | null;
@@ -12,10 +13,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   selectedConversationId,
   onSelectConversation,
 }) => {
-  const { conversations, loading, error, createConversation } =
+  const { conversations, loading, error, createConversation, fetchConversations } =
     useConversations();
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] =
     useState(false);
+  const { onNewMessage, onConversationUpdate } = useWebSocket();
 
   // Get conversation IDs for fetching last messages
   const conversationIds = useMemo(
@@ -40,6 +42,31 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       };
     });
   }, [conversations, lastMessages]);
+
+  // Handle real-time updates
+  useEffect(() => {
+    const handleNewMessage = () => {
+      console.log('ConversationList: Handling new message, refreshing conversations');
+      // Refresh conversations to update last message and unread count
+      fetchConversations();
+      // Also refresh last messages
+      refetchLastMessages();
+    };
+
+    const handleConversationUpdate = () => {
+      console.log('ConversationList: Handling conversation update');
+      fetchConversations();
+      refetchLastMessages();
+    };
+
+    const unsubscribeMessage = onNewMessage(handleNewMessage);
+    const unsubscribeConversation = onConversationUpdate(handleConversationUpdate);
+
+    return () => {
+      unsubscribeMessage();
+      unsubscribeConversation();
+    };
+  }, [onNewMessage, onConversationUpdate, fetchConversations, refetchLastMessages]);
 
   const handleCreateConversation = async (
     phoneNumber: string,

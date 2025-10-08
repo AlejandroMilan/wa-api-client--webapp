@@ -21,23 +21,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   // Handle real-time message updates
   useEffect(() => {
     const handleNewMessage = (newMessage: { conversation: string }) => {
+      console.log('ChatWindow: Handling new message', newMessage, 'Current conversation:', conversationId);
       // Refresh messages if the new message belongs to current conversation
       if (newMessage.conversation === conversationId) {
+        console.log('ChatWindow: Refreshing messages for current conversation');
         fetchMessages();
       }
       // Always refresh conversations to update last message and unread count
+      console.log('ChatWindow: Refreshing conversations');
       fetchConversations();
     };
 
     const handleConversationUpdate = () => {
+      console.log('ChatWindow: Handling conversation update');
       fetchConversations();
     };
 
-    onNewMessage(handleNewMessage);
-    onConversationUpdate(handleConversationUpdate);
+    const unsubscribeMessage = onNewMessage(handleNewMessage);
+    const unsubscribeConversation = onConversationUpdate(handleConversationUpdate);
 
     return () => {
-      // Cleanup is handled by the WebSocket hook
+      unsubscribeMessage();
+      unsubscribeConversation();
     };
   }, [conversationId, onNewMessage, onConversationUpdate, fetchMessages, fetchConversations]);
 
