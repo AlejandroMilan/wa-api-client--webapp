@@ -21,6 +21,19 @@ export interface WaMessage {
   updatedAt: Date;
 }
 
+export interface LastMessage {
+  _id: string;
+  type: string;
+  direction: 'OUTGOING' | 'INCOMING';
+  conversation: string;
+  timestamp: string;
+  readed: boolean;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 // API Request/Response types
 export interface CreateConversationRequest {
   phoneNumber: string;

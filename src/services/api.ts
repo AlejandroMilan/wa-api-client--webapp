@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosResponse } from 'axios';
 import type {
   WaConversation,
   WaMessage,
+  LastMessage,
   CreateConversationRequest,
   ListConversationsRequest,
   ListConversationsResponse,
@@ -68,6 +69,18 @@ export class ApiClient {
 
   async markMessagesAsRead(conversationId: string): Promise<void> {
     await this.client.put(`/wa-messages/conversation/${conversationId}/read`);
+  }
+
+  async getLastMessage(conversationId: string): Promise<LastMessage | null> {
+    try {
+      const response: AxiosResponse<LastMessage> = await this.client.get(
+        `/wa-messages/last/${conversationId}`
+      );
+      return response.data;
+    } catch (error) {
+      // Return null if no last message found (404 or other errors)
+      return null;
+    }
   }
 
   // Webhook for inbound messages (if needed for frontend polling or similar)

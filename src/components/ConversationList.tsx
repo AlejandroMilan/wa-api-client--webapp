@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useConversations } from '../hooks/useApi';
-import type { ConversationWithLastMessage } from '../types/api';
-import { ConversationItem } from './ConversationItem';
-import { NewConversationModal } from './NewConversationModal';
+import React, { useState, useMemo } from "react";
+import { useConversations, useLastMessages } from "../hooks/useApi";
+import type { ConversationWithLastMessage } from "../types/api";
+import { ConversationItem } from "./ConversationItem";
+import { NewConversationModal } from "./NewConversationModal";
 
 interface ConversationListProps {
   selectedConversationId: string | null;
@@ -13,16 +13,47 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   selectedConversationId,
   onSelectConversation,
 }) => {
-  const { conversations, loading, error, createConversation } = useConversations();
-  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
+  const { conversations, loading, error, createConversation } =
+    useConversations();
+  const [isNewConversationModalOpen, setIsNewConversationModalOpen] =
+    useState(false);
 
-  const handleCreateConversation = async (phoneNumber: string, name?: string) => {
+  // Get conversation IDs for fetching last messages
+  const conversationIds = useMemo(
+    () => conversations.map(conv => conv._id),
+    [conversations]
+  );
+
+  // Fetch last messages for all conversations
+  const { lastMessages, refetch: refetchLastMessages } = useLastMessages(conversationIds);
+
+  // Combine conversations with their last messages
+  const conversationsWithLastMessages = useMemo(() => {
+    return conversations.map(conversation => {
+      const lastMessage = lastMessages[conversation._id];
+      return {
+        ...conversation,
+        lastMessage: lastMessage ? {
+          content: lastMessage.text,
+          timestamp: new Date(lastMessage.timestamp),
+          direction: lastMessage.direction === 'OUTGOING' ? 'outbound' as const : 'inbound' as const,
+        } : undefined,
+      };
+    });
+  }, [conversations, lastMessages]);
+
+  const handleCreateConversation = async (
+    phoneNumber: string,
+    name?: string
+  ) => {
     try {
       await createConversation({ phoneNumber, name });
       setIsNewConversationModalOpen(false);
+      // Refresh last messages after creating new conversation
+      refetchLastMessages();
     } catch (err) {
       // Error is handled by the hook
-      console.error('Failed to create conversation:', err);
+      console.error("Failed to create conversation:", err);
     }
   };
 
@@ -36,8 +67,18 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           className="p-2 hover:bg-primary-800 rounded-full transition-colors"
           title="New conversation"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
         </button>
       </div>
@@ -68,7 +109,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* Conversations list */}
       <div className="flex-1 overflow-y-auto">
-        {loading && conversations.length === 0 ? (
+        {loading && conversationsWithLastMessages.length === 0 ? (
           <div className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-900"></div>
           </div>
@@ -77,7 +118,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             <p>Error loading conversations</p>
             <p className="text-sm">{error}</p>
           </div>
-        ) : conversations.length === 0 ? (
+        ) : conversationsWithLastMessages.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <p>No conversations yet</p>
             <button
@@ -89,7 +130,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         ) : (
           <div>
-            {conversations.map((conversation) => (
+            {conversationsWithLastMessages.map((conversation) => (
               <ConversationItem
                 key={conversation._id}
                 conversation={conversation}

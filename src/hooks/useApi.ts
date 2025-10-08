@@ -7,6 +7,7 @@ import type {
   ListMessagesResponse,
   CreateConversationRequest,
   CreateMessageRequest,
+  LastMessage,
   ApiError
 } from '../types/api';
 
@@ -169,5 +170,52 @@ export const useSelectedConversation = () => {
   return {
     selectedConversationId,
     selectConversation,
+  };
+};
+
+// Hook for fetching last messages for conversations
+export const useLastMessages = (conversationIds: string[]) => {
+  const [lastMessages, setLastMessages] = useState<Record<string, LastMessage>>({});
+  const [loading, setLoading] = useState(false);
+
+  const fetchLastMessages = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const promises = ids.map(async (id) => {
+        try {
+          const lastMessage = await apiClient.getLastMessage(id);
+          return { id, lastMessage };
+        } catch {
+          return { id, lastMessage: null };
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const messagesMap: Record<string, LastMessage> = {};
+      
+      results.forEach(({ id, lastMessage }) => {
+        if (lastMessage) {
+          messagesMap[id] = lastMessage;
+        }
+      });
+
+      setLastMessages(messagesMap);
+    } catch (error) {
+      console.error('Error fetching last messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLastMessages(conversationIds);
+  }, [conversationIds, fetchLastMessages]);
+
+  return {
+    lastMessages,
+    loading,
+    refetch: () => fetchLastMessages(conversationIds),
   };
 };
