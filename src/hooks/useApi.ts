@@ -104,9 +104,10 @@ export const useMessages = (conversationId: string | null) => {
     setError(null);
     try {
       const messageData: CreateMessageRequest = {
-        conversationId,
-        content,
-        direction: 'outbound',
+        conversation: conversationId,
+        text: content,
+        direction: 'OUTGOING',
+        type: 'TEXT',
       };
       const newMessage = await apiClient.createMessage(messageData);
       

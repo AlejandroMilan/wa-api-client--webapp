@@ -12,13 +12,15 @@ export interface WaConversation {
 
 export interface WaMessage {
   _id: string;
-  conversationId: string;
-  content: string;
-  direction: 'inbound' | 'outbound';
-  status: 'sent' | 'delivered' | 'read';
-  timestamp: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  type: string;
+  direction: 'INCOMING' | 'OUTGOING';
+  conversation: string;
+  timestamp: string;
+  readed: boolean;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface LastMessage {
@@ -70,9 +72,10 @@ export interface ListConversationsResponse {
 }
 
 export interface CreateMessageRequest {
-  conversationId: string;
-  content: string;
-  direction: 'outbound';
+  conversation: string;
+  text: string;
+  direction: 'OUTGOING';
+  type: 'TEXT';
 }
 
 export interface ListMessagesRequest {
