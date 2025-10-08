@@ -52,7 +52,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isFirstIn
           isOutbound ? 'message-sent' : 'message-received'
         } ${!isFirstInGroup ? 'mt-0.5' : ''}`}
       >
-        <div className="text-sm text-gray-900 break-words whitespace-pre-wrap">
+        <div className="text-sm break-words whitespace-pre-wrap">
           {message.text}
         </div>
         <div className={`flex items-center justify-end mt-1 space-x-1 ${isOutbound ? 'text-gray-600' : 'text-gray-500'}`}>

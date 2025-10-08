@@ -45,7 +45,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, loading, onM
         backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23000'%3e%3cpath d='m6 16 3-8 3 8c2 0 8 0 8 0l3-8 3 8'/%3e%3c/svg%3e")`,
         backgroundSize: '60px 60px',
         backgroundColor: '#f0f2f5',
-        opacity: 0.4
+        opacity: 0.55
       }}
     >
       {messages.length === 0 ? (

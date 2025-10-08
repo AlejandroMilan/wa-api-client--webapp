@@ -81,7 +81,8 @@ body {
 }
 
 .message-received {
-  background-color: white;
+  background-color: #263238;
+  color: white;
   margin-right: auto;
   border-bottom-left-radius: 2px;
 }
