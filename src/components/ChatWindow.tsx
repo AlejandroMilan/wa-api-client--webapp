@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useMessages, useConversations } from "../hooks/useApi";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -12,9 +13,33 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationId,
   onOpenMobileMenu,
 }) => {
-  const { conversations } = useConversations();
-  const { messages, loading, sendMessage, markAsRead } =
+  const { conversations, fetchConversations } = useConversations();
+  const { messages, loading, sendMessage, markAsRead, fetchMessages } =
     useMessages(conversationId);
+  const { onNewMessage, onConversationUpdate, typingUsers, sendTypingIndicator } = useWebSocket();
+
+  // Handle real-time message updates
+  useEffect(() => {
+    const handleNewMessage = (newMessage: { conversation: string }) => {
+      // Refresh messages if the new message belongs to current conversation
+      if (newMessage.conversation === conversationId) {
+        fetchMessages();
+      }
+      // Always refresh conversations to update last message and unread count
+      fetchConversations();
+    };
+
+    const handleConversationUpdate = () => {
+      fetchConversations();
+    };
+
+    onNewMessage(handleNewMessage);
+    onConversationUpdate(handleConversationUpdate);
+
+    return () => {
+      // Cleanup is handled by the WebSocket hook
+    };
+  }, [conversationId, onNewMessage, onConversationUpdate, fetchMessages, fetchConversations]);
 
   const selectedConversation = conversations.find(
     (c) => c._id === conversationId
@@ -131,8 +156,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           messages={messages}
           loading={loading}
           onMarkAsRead={markAsRead}
+          typingUsers={typingUsers}
         />
-        <MessageInput onSendMessage={sendMessage} />
+        <MessageInput 
+          onSendMessage={sendMessage} 
+          onTyping={(isTyping) => {
+            if (conversationId) {
+              sendTypingIndicator(conversationId, isTyping);
+            }
+          }}
+        />
       </div>
     </div>
   );

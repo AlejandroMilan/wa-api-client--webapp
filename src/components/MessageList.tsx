@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import type { WaMessage } from '../types/api';
 import { MessageBubble } from './MessageBubble';
+import type { UserTypingData } from '../services/websocket.service';
 
 interface MessageListProps {
   messages: WaMessage[];
   loading: boolean;
   onMarkAsRead: () => void;
+  typingUsers?: UserTypingData[];
 }
 
-export const MessageList: React.FC<MessageListProps> = ({ messages, loading, onMarkAsRead }) => {
+export const MessageList: React.FC<MessageListProps> = ({ messages, loading, onMarkAsRead, typingUsers = [] }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +73,24 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, loading, onM
               />
             );
           })}
+          
+          {/* Typing indicators */}
+          {typingUsers.length > 0 && (
+            <div className="flex items-center space-x-2 px-4 py-2">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+              <span className="text-sm text-gray-500">
+                {typingUsers.length === 1 
+                  ? `${typingUsers[0].userName || 'Someone'} is typing...`
+                  : `${typingUsers.length} people are typing...`
+                }
+              </span>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       )}

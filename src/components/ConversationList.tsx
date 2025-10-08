@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { useConversations, useLastMessages } from "../hooks/useApi";
-import type { ConversationWithLastMessage } from "../types/api";
 import { ConversationItem } from "./ConversationItem";
 import { NewConversationModal } from "./NewConversationModal";
 

@@ -1,12 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ConversationList } from "./ConversationList";
 import { ChatWindow } from "./ChatWindow";
 import { useSelectedConversation } from "../hooks/useApi";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 export const Layout: React.FC = () => {
   const { selectedConversationId, selectConversation } =
     useSelectedConversation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isConnected, joinConversation, leaveConversation } = useWebSocket();
+
+  // Join conversation when selected
+  useEffect(() => {
+    if (selectedConversationId) {
+      joinConversation(selectedConversationId);
+    }
+    
+    return () => {
+      if (selectedConversationId) {
+        leaveConversation(selectedConversationId);
+      }
+    };
+  }, [selectedConversationId, joinConversation, leaveConversation]);
 
   const handleSelectConversation = (conversationId: string | null) => {
     selectConversation(conversationId);
@@ -69,6 +84,8 @@ export const Layout: React.FC = () => {
               </svg>
             </button>
             <h1 className="text-lg font-medium">WhatsApp Business</h1>
+            <div className={`ml-auto w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} 
+                 title={isConnected ? 'Connected' : 'Disconnected'} />
           </div>
         )}
 

@@ -1,14 +1,17 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 
 interface MessageInputProps {
-  onSendMessage: (content: string) => Promise<void>;
+  onSendMessage: (content: string) => Promise<unknown>;
+  onTyping?: (isTyping: boolean) => void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onTyping }) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
 
   const handleSend = async () => {
     const trimmedMessage = message.trim();
@@ -43,7 +46,33 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+
+    // Handle typing indicators
+    if (e.target.value.trim() && !isTyping) {
+      setIsTyping(true);
+      onTyping?.(true);
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      onTyping?.(false);
+    }, 1500);
   };
+
+  // Clean up typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleEmojiClick = () => {
     // Placeholder for emoji picker functionality
