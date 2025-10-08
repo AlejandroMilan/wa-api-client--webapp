@@ -87,7 +87,11 @@ export const useMessages = (conversationId: string | null) => {
     setError(null);
     try {
       const response: ListMessagesResponse = await apiClient.getMessages(conversationId, { page, limit });
-      setMessages(response.messages);
+      // Sort messages by timestamp in ascending order (oldest first)
+      const sortedMessages = response.messages.sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      setMessages(sortedMessages);
       setPagination(response.pagination);
     } catch (err) {
       const apiError = err as ApiError;
