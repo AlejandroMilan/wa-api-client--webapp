@@ -54,7 +54,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             {conversation.name || conversation.phoneNumber}
           </h3>
           {conversation.lastMessage && (
-            <span className="text-xs text-gray-200 flex-shrink-0 ml-2">
+            <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
               {formatTime(conversation.lastMessage.timestamp)}
             </span>
           )}
